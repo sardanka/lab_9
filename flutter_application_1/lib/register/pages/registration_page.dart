@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:lottie/lottie.dart';
+
 import '../bloc/register_bloc.dart';
 import '../bloc/register_event.dart';
 import '../bloc/register_state.dart';
@@ -160,26 +162,47 @@ class _RegistrationPageState extends State<RegistrationPage> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('Register Form', style: TextStyle(fontWeight: FontWeight.bold)),
-      ),
-      body: BlocListener<RegisterBloc, RegisterState>(
-        listener: (context, state) {
-          if (state is RegisterLoaded) {
+    return BlocListener<RegisterBloc, RegisterState>(
+      listener: (context, state) async {
+        if (state is RegisterLoaded) {
+          showDialog(
+            context: context,
+            barrierDismissible: false,
+            builder: (_) => Center(
+              child: Lottie.asset(
+                'assets/lottie/success.json',
+                width: 160,
+                height: 160,
+                repeat: false,
+              ),
+            ),
+          );
+
+          await Future.delayed(const Duration(seconds: 1));
+
+          if (context.mounted) {
+            Navigator.of(context).pop();
             Navigator.pushReplacement(
               context,
               MaterialPageRoute(
                 builder: (_) => UserInfoPage(profile: state.profile),
               ),
             );
-          } else if (state is RegisterError) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(content: Text(state.message)),
-            );
           }
-        },
-        child: SafeArea(
+        } else if (state is RegisterError) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text(state.message)),
+          );
+        }
+      },
+      child: Scaffold(
+        appBar: AppBar(
+          title: const Text(
+            'Register Form',
+            style: TextStyle(fontWeight: FontWeight.bold),
+          ),
+        ),
+        body: SafeArea(
           child: SingleChildScrollView(
             padding: const EdgeInsets.fromLTRB(18, 20, 18, 24),
             child: Form(
@@ -246,7 +269,9 @@ class _RegistrationPageState extends State<RegistrationPage> {
                     maxLength: 8,
                     suffixIcon: IconButton(
                       onPressed: () => setState(() => _obscurePassword = !_obscurePassword),
-                      icon: Icon(_obscurePassword ? Icons.visibility : Icons.visibility_off),
+                      icon: Icon(
+                        _obscurePassword ? Icons.visibility : Icons.visibility_off,
+                      ),
                     ),
                     onFieldSubmitted: (_) =>
                         FocusScope.of(context).requestFocus(_confirmPasswordFocus),
@@ -265,12 +290,26 @@ class _RegistrationPageState extends State<RegistrationPage> {
                   const SizedBox(height: 20),
                   SizedBox(
                     width: double.infinity,
-                    height: 48,
+                    height: 80,
                     child: BlocBuilder<RegisterBloc, RegisterState>(
                       builder: (context, state) {
                         if (state is RegisterLoading) {
-                          return const Center(child: CircularProgressIndicator());
+                          return Center(
+                            child: Column(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Lottie.asset(
+                                  'assets/lottie/loading.json',
+                                  width: 120,
+                                  height: 100,
+                                ),
+                                const SizedBox(height: 16),
+                                const Text('Signing in...'),
+                              ],
+                            ),
+                          );
                         }
+
                         return ElevatedButton(
                           onPressed: _submit,
                           style: ElevatedButton.styleFrom(
